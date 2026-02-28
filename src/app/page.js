@@ -284,7 +284,7 @@ function AwardRow({ award }) {
                    (deadlineInfo.date - new Date()) < 30 * 24 * 60 * 60 * 1000
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--card-hover)] transition-colors">
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
       <div className="text-2xl w-10 text-center flex-shrink-0">
         {typeIcons[award.type] || '🏆'}
       </div>
