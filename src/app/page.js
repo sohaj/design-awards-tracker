@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import awardsData from '../data/awards.json'
 
 const difficultyColors = {
@@ -68,6 +68,35 @@ export default function Home() {
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [sortBy, setSortBy] = useState('deadline')
   const [lastUpdated] = useState(awardsData.lastUpdated)
+  
+  // Side panel state
+  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [selectedAward, setSelectedAward] = useState(null)
+  const [drafts, setDrafts] = useState({})
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    years: '',
+    expertise: '',
+    notableWork: ''
+  })
+
+  // Load drafts and profile from localStorage
+  useEffect(() => {
+    const savedDrafts = localStorage.getItem('awardDrafts')
+    const savedProfile = localStorage.getItem('userProfile')
+    if (savedDrafts) setDrafts(JSON.parse(savedDrafts))
+    if (savedProfile) setUserProfile(JSON.parse(savedProfile))
+  }, [])
+
+  // Save drafts to localStorage
+  useEffect(() => {
+    localStorage.setItem('awardDrafts', JSON.stringify(drafts))
+  }, [drafts])
+
+  // Save profile to localStorage
+  useEffect(() => {
+    localStorage.setItem('userProfile', JSON.stringify(userProfile))
+  }, [userProfile])
 
   const categories = useMemo(() => {
     const cats = [...new Set(awardsData.awards.map(a => a.category))]
@@ -120,7 +149,8 @@ export default function Home() {
     easy: awardsData.awards.filter(a => a.difficulty === 'Easy').length,
     medium: awardsData.awards.filter(a => a.difficulty === 'Medium').length,
     hard: awardsData.awards.filter(a => a.difficulty === 'Hard').length,
-  }), [])
+    draftsCount: Object.keys(drafts).length,
+  }), [drafts])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -142,26 +172,60 @@ export default function Home() {
     setSearchQuery('')
   }
 
+  const openPanel = (award) => {
+    setSelectedAward(award)
+    setIsPanelOpen(true)
+  }
+
+  const saveDraft = (awardId, content) => {
+    setDrafts(prev => ({
+      ...prev,
+      [awardId]: {
+        content,
+        updatedAt: new Date().toISOString()
+      }
+    }))
+  }
+
+  const deleteDraft = (awardId) => {
+    setDrafts(prev => {
+      const newDrafts = { ...prev }
+      delete newDrafts[awardId]
+      return newDrafts
+    })
+  }
+
   return (
     <main className="min-h-screen bg-[var(--background)]">
       {/* Header */}
       <header className="border-b border-[var(--border)] bg-[var(--background)]">
-        <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold tracking-tight">Design Awards Tracker</h1>
               <p className="text-sm text-[var(--muted)] mt-0.5">
-                {stats.total} opportunities · {stats.completed} applied
+                {stats.total} opportunities · {stats.completed} applied · {stats.draftsCount} drafts
               </p>
             </div>
-            <div className="text-xs text-[var(--muted)]">
-              Updated {formatDate(lastUpdated)}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setSelectedAward(null); setIsPanelOpen(true); }}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                AI Assistant
+              </button>
+              <div className="text-xs text-[var(--muted)]">
+                Updated {formatDate(lastUpdated)}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Search */}
         <div className="mb-4">
           <div className="relative">
@@ -254,7 +318,12 @@ export default function Home() {
         {/* Awards List */}
         <div className="space-y-3">
           {filteredAwards.map((award) => (
-            <AwardRow key={award.id} award={award} />
+            <AwardRow 
+              key={award.id} 
+              award={award} 
+              onWriteApplication={() => openPanel(award)}
+              hasDraft={!!drafts[award.id]}
+            />
           ))}
         </div>
 
@@ -266,11 +335,25 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* AI Side Panel */}
+      <AIPanel 
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        award={selectedAward}
+        drafts={drafts}
+        onSaveDraft={saveDraft}
+        onDeleteDraft={deleteDraft}
+        userProfile={userProfile}
+        setUserProfile={setUserProfile}
+        allAwards={awardsData.awards}
+        onSelectAward={setSelectedAward}
+      />
     </main>
   )
 }
 
-function AwardRow({ award }) {
+function AwardRow({ award, onWriteApplication, hasDraft }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopyLink = () => {
@@ -297,6 +380,11 @@ function AwardRow({ award }) {
               Applied
             </span>
           )}
+          {hasDraft && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex-shrink-0">
+              Draft
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
           <span className={`${difficultyColors[award.difficulty]} badge`}>{award.difficulty}</span>
@@ -309,6 +397,13 @@ function AwardRow({ award }) {
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={onWriteApplication}
+          className="px-3 py-2 border border-blue-500 text-blue-500 rounded-lg text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          title="Write application with AI"
+        >
+          ✨ Write
+        </button>
         <a
           href={award.link}
           target="_blank"
@@ -319,12 +414,454 @@ function AwardRow({ award }) {
         </a>
         <button
           onClick={handleCopyLink}
-          className="p-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--card-hover)] transition-colors"
+          className="p-2 border border-[var(--border)] rounded-lg text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           title="Copy link"
         >
           {copied ? '✓' : '📋'}
         </button>
       </div>
     </div>
+  )
+}
+
+function AIPanel({ isOpen, onClose, award, drafts, onSaveDraft, onDeleteDraft, userProfile, setUserProfile, allAwards, onSelectAward }) {
+  const [activeTab, setActiveTab] = useState('generate')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedContent, setGeneratedContent] = useState('')
+  const [customPrompt, setCustomPrompt] = useState('')
+  const [editedContent, setEditedContent] = useState('')
+
+  // Load draft when award changes
+  useEffect(() => {
+    if (award && drafts[award.id]) {
+      setEditedContent(drafts[award.id].content)
+      setGeneratedContent(drafts[award.id].content)
+    } else {
+      setEditedContent('')
+      setGeneratedContent('')
+    }
+  }, [award, drafts])
+
+  const generateApplication = async () => {
+    if (!award) return
+    
+    setIsGenerating(true)
+    try {
+      const systemPrompt = `You are an expert at writing compelling jury application submissions for design awards. 
+Your task is to help the user craft personalized, professional responses for their jury application.
+
+Award Details:
+- Name: ${award.name}
+- Category: ${award.category}
+- Type: ${award.type}
+- Description: ${award.description}
+
+User Profile:
+${userProfile.name ? `- Name: ${userProfile.name}` : ''}
+${userProfile.years ? `- Years of Experience: ${userProfile.years}` : ''}
+${userProfile.expertise ? `- Expertise: ${userProfile.expertise}` : ''}
+${userProfile.notableWork ? `- Notable Work: ${userProfile.notableWork}` : ''}
+
+Guidelines:
+1. Be specific and authentic - avoid generic statements
+2. Highlight relevant experience that matches the award's focus
+3. Show passion for design excellence and industry contribution
+4. Keep responses concise but impactful
+5. Tailor the tone to match the prestige level of the award
+6. Include specific examples and achievements where relevant`
+
+      const userPrompt = customPrompt || `Write a compelling jury application for ${award.name}. Include:
+1. A brief introduction about my design expertise
+2. Why I'm qualified to judge this award
+3. What unique perspective I would bring to the jury
+4. My commitment to design excellence and the industry`
+
+      const response = await fetch('https://api.llama-api.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer LLM|2485278665220395|qfkTtzlukIpj9k7u2rZdiRn4YvI',
+        },
+        body: JSON.stringify({
+          model: 'llama3.1-70b',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 1500,
+          temperature: 0.7,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setGeneratedContent(data.choices[0].message.content)
+        setEditedContent(data.choices[0].message.content)
+      } else {
+        // Fallback to template
+        const fallback = generateFallbackContent(award, userProfile)
+        setGeneratedContent(fallback)
+        setEditedContent(fallback)
+      }
+    } catch (error) {
+      console.error('Generation failed:', error)
+      const fallback = generateFallbackContent(award, userProfile)
+      setGeneratedContent(fallback)
+      setEditedContent(fallback)
+    }
+    setIsGenerating(false)
+  }
+
+  const generateFallbackContent = (award, profile) => {
+    const name = profile?.name || 'Design Professional'
+    const years = profile?.years || '10+'
+    const expertise = profile?.expertise || 'product design, UX design, and design leadership'
+    
+    const templates = {
+      'judging': `Dear ${award.name} Selection Committee,
+
+I am excited to apply for the jury position for the ${award.name}.
+
+With ${years} years of experience in ${expertise}, I have developed a deep understanding of what constitutes exceptional ${award.category.toLowerCase()} work. My career has spanned diverse projects across various industries, giving me a well-rounded perspective on design excellence.
+
+**Why I'm Qualified:**
+• Extensive experience evaluating and critiquing design work
+• Track record of mentoring designers and providing constructive feedback  
+• Deep knowledge of ${award.category.toLowerCase()} best practices and emerging trends
+• Commitment to diversity and inclusion in design recognition
+
+**My Unique Perspective:**
+I believe great ${award.category.toLowerCase()} should not only be aesthetically compelling but also solve real problems and create meaningful impact. I would bring this holistic evaluation approach to the jury.
+
+**Commitment:**
+I am dedicated to giving each submission the thorough consideration it deserves and contributing to discussions that elevate our industry's standards.
+
+I would be honored to serve on the ${award.name} jury and help recognize outstanding work in our field.
+
+Best regards,
+${name}`,
+
+      'speaking': `Dear ${award.name} Organizing Committee,
+
+I am writing to express my interest in speaking at ${award.name}.
+
+**Proposed Topic:** The Future of ${award.category} - Lessons from ${years} Years in Design
+
+**Abstract:**
+Drawing from my ${years} years of experience in ${expertise}, I would share practical insights and actionable strategies that attendees can apply immediately.
+
+**Why This Talk:**
+• Addresses current industry challenges
+• Based on real-world experience and case studies
+• Interactive elements to engage the audience
+
+**Speaker Bio:**
+${name} is a design leader with ${years} years of experience in ${expertise}.
+
+I would be thrilled to contribute to ${award.name} and share knowledge with the design community.
+
+Best regards,
+${name}`,
+
+      'event': `Dear ${award.name} Team,
+
+I am interested in participating in ${award.name}.
+
+With my background in ${expertise} spanning ${years} years, I believe I can contribute meaningfully to this event. I am passionate about ${award.category.toLowerCase()} and committed to advancing our industry.
+
+I look forward to the opportunity to connect with fellow professionals and contribute to the ${award.name} community.
+
+Best regards,
+${name}`
+    }
+
+    return templates[award.type] || templates['judging']
+  }
+
+  const handleSave = () => {
+    if (award && editedContent) {
+      onSaveDraft(award.id, editedContent)
+    }
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(editedContent)
+  }
+
+  const draftsWithAwards = Object.entries(drafts).map(([id, draft]) => ({
+    ...draft,
+    award: allAwards.find(a => a.id === parseInt(id))
+  })).filter(d => d.award)
+
+  if (!isOpen) return null
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onClose}
+      />
+      
+      {/* Panel */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-xl bg-[var(--background)] shadow-2xl z-50 flex flex-col">
+        {/* Panel Header */}
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">✨</span>
+            <h2 className="font-semibold">AI Application Writer</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-[var(--border)]">
+          <button
+            onClick={() => setActiveTab('generate')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'generate' 
+                ? 'text-blue-500 border-b-2 border-blue-500' 
+                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            Generate
+          </button>
+          <button
+            onClick={() => setActiveTab('drafts')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'drafts' 
+                ? 'text-blue-500 border-b-2 border-blue-500' 
+                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            Drafts ({Object.keys(drafts).length})
+          </button>
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'profile' 
+                ? 'text-blue-500 border-b-2 border-blue-500' 
+                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            My Profile
+          </button>
+        </div>
+
+        {/* Panel Content */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {activeTab === 'generate' && (
+            <div className="space-y-4">
+              {/* Award Selection */}
+              {award ? (
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span>{typeIcons[award.type]}</span>
+                    <span className="font-medium text-sm">{award.name}</span>
+                  </div>
+                  <div className="text-xs text-[var(--muted)]">
+                    {award.category} · {award.deadline}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg border border-dashed border-[var(--border)] text-center">
+                  <p className="text-sm text-[var(--muted)]">
+                    Select an award from the list or click "✨ Write" button
+                  </p>
+                </div>
+              )}
+
+              {/* Custom Prompt */}
+              <div>
+                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">
+                  Custom Instructions (optional)
+                </label>
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  placeholder="E.g., 'Focus on my UX research experience' or 'Make it more formal'"
+                  className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Generate Button */}
+              <button
+                onClick={generateApplication}
+                disabled={!award || isGenerating}
+                className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Generating with AI...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Generate Application
+                  </>
+                )}
+              </button>
+
+              {/* Generated Content */}
+              {editedContent && (
+                <div className="space-y-3">
+                  <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider block">
+                    Generated Application (editable)
+                  </label>
+                  <textarea
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm resize-none h-64 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSave}
+                      className="flex-1 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                    >
+                      💾 Save Draft
+                    </button>
+                    <button
+                      onClick={handleCopy}
+                      className="flex-1 py-2 border border-[var(--border)] rounded-lg text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    >
+                      📋 Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'drafts' && (
+            <div className="space-y-3">
+              {draftsWithAwards.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-3xl mb-2">📝</div>
+                  <p className="text-sm text-[var(--muted)]">No drafts saved yet</p>
+                </div>
+              ) : (
+                draftsWithAwards.map(({ award: draftAward, content, updatedAt }) => (
+                  <div
+                    key={draftAward.id}
+                    className="p-3 rounded-lg border border-[var(--border)] hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span>{typeIcons[draftAward.type]}</span>
+                          <span className="font-medium text-sm">{draftAward.name}</span>
+                        </div>
+                        <div className="text-xs text-[var(--muted)] mt-1">
+                          Saved {new Date(updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-[var(--muted)] line-clamp-2 mb-3">{content}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          onSelectAward(draftAward)
+                          setActiveTab('generate')
+                        }}
+                        className="flex-1 py-1.5 text-xs bg-blue-500 text-white rounded font-medium hover:bg-blue-600 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(content)}
+                        className="flex-1 py-1.5 text-xs border border-[var(--border)] rounded font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => onDeleteDraft(draftAward.id)}
+                        className="py-1.5 px-3 text-xs text-red-500 border border-red-200 dark:border-red-800 rounded font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="space-y-4">
+              <p className="text-sm text-[var(--muted)]">
+                Your profile helps the AI generate personalized applications.
+              </p>
+              
+              <div>
+                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  value={userProfile.name}
+                  onChange={(e) => setUserProfile(p => ({ ...p, name: e.target.value }))}
+                  placeholder="John Doe"
+                  className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">
+                  Years of Experience
+                </label>
+                <input
+                  type="text"
+                  value={userProfile.years}
+                  onChange={(e) => setUserProfile(p => ({ ...p, years: e.target.value }))}
+                  placeholder="10+"
+                  className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">
+                  Areas of Expertise
+                </label>
+                <textarea
+                  value={userProfile.expertise}
+                  onChange={(e) => setUserProfile(p => ({ ...p, expertise: e.target.value }))}
+                  placeholder="UX Design, Product Design, Design Systems, User Research"
+                  className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">
+                  Notable Work & Achievements
+                </label>
+                <textarea
+                  value={userProfile.notableWork}
+                  onChange={(e) => setUserProfile(p => ({ ...p, notableWork: e.target.value }))}
+                  placeholder="Led design at Google, shipped products used by 10M+ users, speaker at Config 2024"
+                  className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="pt-2 text-xs text-[var(--muted)]">
+                ✓ Profile auto-saves to your browser
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   )
 }
