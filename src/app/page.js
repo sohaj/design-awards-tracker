@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import awardsData from '../data/awards.json'
 
 const difficultyColors = {
@@ -16,15 +16,58 @@ const typeIcons = {
   'competition': '🏆',
 }
 
+function parseDeadline(deadline) {
+  if (!deadline) return { date: null, isRolling: true }
+  
+  const lower = deadline.toLowerCase()
+  if (lower.includes('rolling') || lower.includes('ongoing') || lower.includes('event-dependent')) {
+    return { date: null, isRolling: true }
+  }
+  
+  const monthMap = {
+    'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+    'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+  }
+  
+  const patterns = [
+    /([a-z]+)\s*(\d{1,2})?\s*[-–]?\s*(\d{4})/i,
+    /([a-z]+)\s+(\d{4})/i,
+    /(\d{4})/,
+  ]
+  
+  for (const pattern of patterns) {
+    const match = deadline.match(pattern)
+    if (match) {
+      if (match[1] && monthMap[match[1].toLowerCase().substring(0, 3)] !== undefined) {
+        const month = monthMap[match[1].toLowerCase().substring(0, 3)]
+        const day = match[2] ? parseInt(match[2]) : 1
+        const year = match[3] ? parseInt(match[3]) : (match[2] && match[2].length === 4 ? parseInt(match[2]) : 2026)
+        return { date: new Date(year, month, day), isRolling: false }
+      }
+    }
+  }
+  
+  const yearMatch = deadline.match(/20\d{2}/)
+  if (yearMatch) {
+    const quarterMatch = deadline.toLowerCase()
+    let month = 0
+    if (quarterMatch.includes('early')) month = 2
+    else if (quarterMatch.includes('mid')) month = 5
+    else if (quarterMatch.includes('late')) month = 9
+    return { date: new Date(parseInt(yearMatch[0]), month, 1), isRolling: false }
+  }
+  
+  return { date: null, isRolling: true }
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDifficulty, setSelectedDifficulty] = useState('All')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedType, setSelectedType] = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
-  const [sortBy, setSortBy] = useState('difficulty')
-  const [lastUpdated, setLastUpdated] = useState(awardsData.lastUpdated)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [sortBy, setSortBy] = useState('deadline')
+  const [lastUpdated] = useState(awardsData.lastUpdated)
 
   const categories = useMemo(() => {
     const cats = [...new Set(awardsData.awards.map(a => a.category))]
@@ -48,7 +91,18 @@ export default function Home() {
       return matchesSearch && matchesDifficulty && matchesCategory && matchesType && matchesStatus
     })
 
-    if (sortBy === 'difficulty') {
+    if (sortBy === 'deadline') {
+      filtered.sort((a, b) => {
+        const deadlineA = parseDeadline(a.deadline)
+        const deadlineB = parseDeadline(b.deadline)
+        
+        if (deadlineA.isRolling && deadlineB.isRolling) return 0
+        if (deadlineA.isRolling) return 1
+        if (deadlineB.isRolling) return -1
+        
+        return deadlineA.date - deadlineB.date
+      })
+    } else if (sortBy === 'difficulty') {
       const order = { 'Easy': 1, 'Medium': 2, 'Hard': 3 }
       filtered.sort((a, b) => order[a.difficulty] - order[b.difficulty])
     } else if (sortBy === 'name') {
@@ -68,227 +122,155 @@ export default function Home() {
     hard: awardsData.awards.filter(a => a.difficulty === 'Hard').length,
   }), [])
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    // On GitHub Pages (static), this triggers a visual refresh
-    // Actual data updates happen via GitHub Actions daily rebuild
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setLastUpdated(new Date().toISOString())
-    setIsRefreshing(false)
-  }
-
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric', 
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     })
   }
 
+  const hasActiveFilters = selectedDifficulty !== 'All' || selectedCategory !== 'All' || 
+                           selectedType !== 'All' || selectedStatus !== 'All'
+
+  const clearFilters = () => {
+    setSelectedDifficulty('All')
+    setSelectedCategory('All')
+    setSelectedType('All')
+    setSelectedStatus('All')
+    setSearchQuery('')
+  }
+
   return (
-    <main className="min-h-screen pb-20">
+    <main className="min-h-screen bg-[var(--background)]">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[var(--background)]/80 border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="border-b border-[var(--border)] bg-[var(--background)]">
+        <div className="max-w-5xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Design Awards Tracker</h1>
-              <p className="text-sm text-[var(--muted)] mt-1">
-                Judging & Speaking Opportunities
+              <h1 className="text-xl font-semibold tracking-tight">Design Awards Tracker</h1>
+              <p className="text-sm text-[var(--muted)] mt-0.5">
+                {stats.total} opportunities · {stats.completed} applied
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot"></span>
-                Updated {formatDate(lastUpdated)}
-              </div>
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-              >
-                {isRefreshing ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                  </>
-                )}
-              </button>
+            <div className="text-xs text-[var(--muted)]">
+              Updated {formatDate(lastUpdated)}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-          <div className="card text-center">
-            <div className="text-3xl font-bold">{stats.total}</div>
-            <div className="text-xs text-[var(--muted)] mt-1">Total Awards</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-blue-500">{stats.completed}</div>
-            <div className="text-xs text-[var(--muted)] mt-1">Completed</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-green-500">{stats.easy}</div>
-            <div className="text-xs text-[var(--muted)] mt-1">Easy</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-yellow-500">{stats.medium}</div>
-            <div className="text-xs text-[var(--muted)] mt-1">Medium</div>
-          </div>
-          <div className="card text-center">
-            <div className="text-3xl font-bold text-red-500">{stats.hard}</div>
-            <div className="text-xs text-[var(--muted)] mt-1">Hard</div>
-          </div>
-        </div>
-
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="relative">
-            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
-              placeholder="Search awards, categories, or descriptions..."
+              placeholder="Search awards..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--card)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="space-y-4 mb-8">
-          {/* Difficulty Filter */}
-          <div>
-            <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">Difficulty</label>
-            <div className="flex flex-wrap gap-2">
-              {difficulties.map(diff => (
-                <button
-                  key={diff}
-                  onClick={() => setSelectedDifficulty(diff)}
-                  className={`filter-btn ${selectedDifficulty === diff ? 'filter-btn-active' : 'filter-btn-inactive'}`}
-                >
-                  {diff}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Filters Row */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <select
+            value={selectedDifficulty}
+            onChange={(e) => setSelectedDifficulty(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="All">All Difficulties</option>
+            {difficulties.slice(1).map(d => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
 
-          {/* Type Filter */}
-          <div>
-            <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">Type</label>
-            <div className="flex flex-wrap gap-2">
-              {types.map(type => (
-                <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`filter-btn ${selectedType === type ? 'filter-btn-active' : 'filter-btn-inactive'}`}
-                >
-                  {type === 'All' ? 'All' : `${typeIcons[type] || ''} ${type.charAt(0).toUpperCase() + type.slice(1)}`}
-                </button>
-              ))}
-            </div>
-          </div>
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="All">All Types</option>
+            <option value="judging">⚖️ Judging</option>
+            <option value="speaking">🎤 Speaking</option>
+            <option value="event">🎪 Event</option>
+          </select>
 
-          {/* Status Filter */}
-          <div>
-            <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">Status</label>
-            <div className="flex flex-wrap gap-2">
-              {statuses.map(status => (
-                <button
-                  key={status}
-                  onClick={() => setSelectedStatus(status)}
-                  className={`filter-btn ${selectedStatus === status ? 'filter-btn-active' : 'filter-btn-inactive'}`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>
+            ))}
+          </select>
 
-          {/* Category Filter */}
-          <div>
-            <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider mb-2 block">Category</label>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto scrollbar-hide">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`filter-btn ${selectedCategory === cat ? 'filter-btn-active' : 'filter-btn-inactive'}`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="All">All Status</option>
+            <option value="Not started">Not started</option>
+            <option value="Completed">Completed</option>
+          </select>
 
-          {/* Sort */}
-          <div className="flex items-center gap-4">
-            <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Sort by</label>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-[var(--muted)]">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="deadline">Deadline</option>
               <option value="difficulty">Difficulty</option>
               <option value="name">Name</option>
               <option value="category">Category</option>
             </select>
           </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-blue-500 hover:text-blue-600 font-medium"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         {/* Results Count */}
         <div className="mb-4 text-sm text-[var(--muted)]">
-          Showing {filteredAwards.length} of {awardsData.awards.length} opportunities
+          {filteredAwards.length} {filteredAwards.length === 1 ? 'result' : 'results'}
         </div>
 
-        {/* Awards Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Awards List */}
+        <div className="space-y-3">
           {filteredAwards.map((award) => (
-            <AwardCard key={award.id} award={award} />
+            <AwardRow key={award.id} award={award} />
           ))}
         </div>
 
         {filteredAwards.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">🔍</div>
-            <div className="text-lg font-medium">No awards found</div>
-            <div className="text-sm text-[var(--muted)] mt-1">Try adjusting your filters or search query</div>
+          <div className="text-center py-16">
+            <div className="text-3xl mb-3">🔍</div>
+            <div className="font-medium">No awards found</div>
+            <div className="text-sm text-[var(--muted)] mt-1">Try adjusting your filters</div>
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <footer className="border-t border-[var(--border)] mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-sm text-[var(--muted)]">
-            <p>Auto-updated daily with the latest design awards and opportunities</p>
-            <p className="mt-2">Built for EB-1A visa applicants pursuing design excellence</p>
-          </div>
-        </div>
-      </footer>
     </main>
   )
 }
 
-function AwardCard({ award }) {
+function AwardRow({ award }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopyLink = () => {
@@ -297,51 +279,47 @@ function AwardCard({ award }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const deadlineInfo = parseDeadline(award.deadline)
+  const isUrgent = deadlineInfo.date && !deadlineInfo.isRolling && 
+                   (deadlineInfo.date - new Date()) < 30 * 24 * 60 * 60 * 1000
+
   return (
-    <div className="card group">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1">
-          <h3 className="font-semibold text-base leading-tight group-hover:text-blue-500 transition-colors">
-            {award.name}
-          </h3>
-          <p className="text-xs text-[var(--muted)] mt-1 line-clamp-2">{award.description}</p>
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--card-hover)] transition-colors">
+      <div className="text-2xl w-10 text-center flex-shrink-0">
+        {typeIcons[award.type] || '🏆'}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="font-medium text-sm truncate">{award.name}</h3>
+          {award.status === 'Completed' && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex-shrink-0">
+              Applied
+            </span>
+          )}
         </div>
-        <span className="text-xl">{typeIcons[award.type] || '🏆'}</span>
+        <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+          <span className={`${difficultyColors[award.difficulty]} badge`}>{award.difficulty}</span>
+          <span>{award.category}</span>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <span className={`badge ${difficultyColors[award.difficulty]}`}>
-          {award.difficulty}
-        </span>
-        <span className="badge badge-category">
-          {award.category}
-        </span>
-        {award.status === 'Completed' && (
-          <span className="badge badge-completed">
-            ✓ Applied
-          </span>
-        )}
+      <div className={`text-sm flex-shrink-0 w-32 text-right ${isUrgent ? 'text-red-500 font-medium' : 'text-[var(--muted)]'}`}>
+        {award.deadline}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-[var(--muted)] mb-4">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>{award.deadline}</span>
-      </div>
-
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <a
           href={award.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 px-4 py-2.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg text-sm font-medium text-center hover:opacity-90 transition-opacity"
+          className="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
         >
-          Apply Now
+          Apply
         </a>
         <button
           onClick={handleCopyLink}
-          className="px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--card-hover)] transition-colors"
+          className="p-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--card-hover)] transition-colors"
           title="Copy link"
         >
           {copied ? '✓' : '📋'}
