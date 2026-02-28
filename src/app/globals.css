@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #f5f5f5;
+  --card-hover: #ebebeb;
+  --border: #e5e5e5;
+  --muted: #737373;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --card: #171717;
+    --card-hover: #262626;
+    --border: #262626;
+    --muted: #a3a3a3;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@layer components {
+  .card {
+    @apply bg-[var(--card)] rounded-xl border border-[var(--border)] p-4 transition-all duration-200;
+  }
+  
+  .card:hover {
+    @apply bg-[var(--card-hover)] shadow-lg;
+  }
+  
+  .badge {
+    @apply px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .badge-easy {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+  
+  .badge-medium {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+  
+  .badge-hard {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+  
+  .badge-completed {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+  
+  .badge-category {
+    @apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400;
+  }
+  
+  .filter-btn {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border;
+  }
+  
+  .filter-btn-active {
+    @apply bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white;
+  }
+  
+  .filter-btn-inactive {
+    @apply bg-transparent text-neutral-600 border-neutral-300 hover:border-neutral-400 dark:text-neutral-400 dark:border-neutral-700 dark:hover:border-neutral-600;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

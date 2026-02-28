@@ -1,0 +1,374 @@
+{
+  "lastUpdated": "2026-02-27T23:30:00Z",
+  "awards": [
+    {
+      "id": 1,
+      "name": "Stevie Awards – Sales & CS",
+      "link": "https://sales.stevieawards.com/sa-judge/register",
+      "deadline": "Dec–Jan 2026",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Business",
+      "type": "judging",
+      "description": "Judge entries in sales and customer service categories"
+    },
+    {
+      "id": 2,
+      "name": "Stevie Awards for Tech Excellence",
+      "link": "https://stevieawards.com/technology",
+      "deadline": "May 21–July 17 2025",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Technology",
+      "type": "judging",
+      "description": "Judge technology innovation and excellence awards"
+    },
+    {
+      "id": 3,
+      "name": "Stevie Awards – Asia Pacific",
+      "link": "https://asia-legacy.stevieawards.com/apply-be-juc",
+      "deadline": "Dec 2025–Feb 2026",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Business",
+      "type": "judging",
+      "description": "Judge Asia Pacific business awards"
+    },
+    {
+      "id": 4,
+      "name": "Online Design Awards (ODA)",
+      "link": "https://www.onlinedesignawards.com/juryapplication",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Judge digital design and web projects"
+    },
+    {
+      "id": 5,
+      "name": "LOOP Design Awards Jury",
+      "link": "https://loopdesignawards.com/jury-application-form",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Evaluate interior and product design submissions"
+    },
+    {
+      "id": 6,
+      "name": "un Design Award Jury",
+      "link": "https://www.undesignawards.com/jury/registration",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Judge unified design award entries"
+    },
+    {
+      "id": 7,
+      "name": "Indigo Design Award",
+      "link": "https://www.indigoaward.com/juries",
+      "deadline": "Jan 31 2026",
+      "difficulty": "Easy",
+      "status": "Completed",
+      "category": "Design",
+      "type": "judging",
+      "description": "Evaluate branding, graphic, and digital design"
+    },
+    {
+      "id": 8,
+      "name": "NY Product Design Awards",
+      "link": "https://nydesignawards.com/judge-application.php",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Product Design",
+      "type": "judging",
+      "description": "Judge product design innovation in New York"
+    },
+    {
+      "id": 9,
+      "name": "Muse Design Awards",
+      "link": "https://museaward.com/jury-application.php",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "International design award judging opportunity"
+    },
+    {
+      "id": 10,
+      "name": "Titan Business Awards",
+      "link": "https://thetitanawards.com/judge-application.php",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Business",
+      "type": "judging",
+      "description": "Judge business innovation and leadership awards"
+    },
+    {
+      "id": 11,
+      "name": "Horizon Interactive Awards",
+      "link": "mailto:judging@horizoninteractiveawards.com",
+      "deadline": "Rolling (Email)",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Interactive",
+      "type": "judging",
+      "description": "Judge interactive media and web development"
+    },
+    {
+      "id": 12,
+      "name": "Design Systems Awards Jury",
+      "link": "https://awards.zeroheight.com/jury",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Design Systems",
+      "type": "judging",
+      "description": "Evaluate design system implementations"
+    },
+    {
+      "id": 13,
+      "name": "Adobe Creative Jams",
+      "link": "https://creativejams.adobe.com/",
+      "deadline": "Event-dependent",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Creative",
+      "type": "event",
+      "description": "Adobe's creative competition events"
+    },
+    {
+      "id": 14,
+      "name": "DeveloperWeek Hackathon",
+      "link": "https://www.developerweek.com/call-for-speakers",
+      "deadline": "Feb 2026",
+      "difficulty": "Easy",
+      "status": "Completed",
+      "category": "Technology",
+      "type": "speaking",
+      "description": "Apply to speak or judge at DeveloperWeek"
+    },
+    {
+      "id": 15,
+      "name": "Lablab.ai (AI Hackathons)",
+      "link": "https://lablab.ai/",
+      "deadline": "Ongoing",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "AI/ML",
+      "type": "judging",
+      "description": "Judge AI hackathon competitions"
+    },
+    {
+      "id": 16,
+      "name": "Hackathon Judge Pools – MLH",
+      "link": "https://mlh.io/contact",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Technology",
+      "type": "judging",
+      "description": "Major League Hacking judge pool"
+    },
+    {
+      "id": 17,
+      "name": "Hackathon Judge Pool – Devpost",
+      "link": "https://devpost.com/judges",
+      "deadline": "Rolling",
+      "difficulty": "Easy",
+      "status": "Not started",
+      "category": "Technology",
+      "type": "judging",
+      "description": "Join Devpost's hackathon judge community"
+    },
+    {
+      "id": 18,
+      "name": "Core77 Design Awards Jury",
+      "link": "https://designawards.core77.com/Jury",
+      "deadline": "March 25 2025",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Industrial Design",
+      "type": "judging",
+      "description": "Prestigious industrial design award judging"
+    },
+    {
+      "id": 19,
+      "name": "UX Design Awards Jury",
+      "link": "https://ux-design-awards.com/jury/",
+      "deadline": "Early 2026",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "UX Design",
+      "type": "judging",
+      "description": "Judge user experience design excellence"
+    },
+    {
+      "id": 20,
+      "name": "AIGA Design Competitions",
+      "link": "https://www.aiga.org/volunteer",
+      "deadline": "Rolling",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Graphic Design",
+      "type": "judging",
+      "description": "AIGA professional design organization judging"
+    },
+    {
+      "id": 21,
+      "name": "CES Innovation Awards Jury",
+      "link": "https://cta.secure-platform.com/ces-judging-application",
+      "deadline": "Mid-2025",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Consumer Electronics",
+      "type": "judging",
+      "description": "Judge consumer technology innovation at CES"
+    },
+    {
+      "id": 22,
+      "name": "London Design Awards",
+      "link": "https://thelondondesignawards.com/jury-application",
+      "deadline": "June 5 2026",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Judge design excellence in London awards"
+    },
+    {
+      "id": 23,
+      "name": "DNA Paris Design Awards",
+      "link": "https://dna.paris/contact/",
+      "deadline": "Rolling",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Paris-based international design awards"
+    },
+    {
+      "id": 24,
+      "name": "International Design Awards",
+      "link": "https://www.idesignawards.com/judges-apply.php",
+      "deadline": "Rolling",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Judge international design competition entries"
+    },
+    {
+      "id": 25,
+      "name": "A' Design Award",
+      "link": "https://competition.adesignaward.com/jury-nomination",
+      "deadline": "April 1–12 2026",
+      "difficulty": "Medium",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "World's largest design award competition judging"
+    },
+    {
+      "id": 26,
+      "name": "IDEA (IDSA) Jury",
+      "link": "https://www.idsa.org/awards-recognitions/idea/",
+      "deadline": "Apr 30 2025",
+      "difficulty": "Hard",
+      "status": "Completed",
+      "category": "Industrial Design",
+      "type": "judging",
+      "description": "Industrial Designers Society of America awards"
+    },
+    {
+      "id": 27,
+      "name": "Interaction Awards (IxDA)",
+      "link": "https://interactionawards.ixda.org/jury/",
+      "deadline": "Late 2025",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Interaction Design",
+      "type": "judging",
+      "description": "Interaction Design Association awards judging"
+    },
+    {
+      "id": 28,
+      "name": "ACM SIGGRAPH Jury",
+      "link": "https://www.siggraph.org/inside-siggraph/volunteer",
+      "deadline": "Late 2025",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Computer Graphics",
+      "type": "judging",
+      "description": "Premier computer graphics conference judging"
+    },
+    {
+      "id": 29,
+      "name": "iF Design Award",
+      "link": "https://ifdesign.com/en/if-design-award-and-jury",
+      "deadline": "Oct–Dec 2025",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "Prestigious German design award jury"
+    },
+    {
+      "id": 30,
+      "name": "Red Dot Design Award",
+      "link": "https://www.red-dot.org/contact",
+      "deadline": "March 2026",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Design",
+      "type": "judging",
+      "description": "World-renowned design award jury participation"
+    },
+    {
+      "id": 31,
+      "name": "Awwwards Jury",
+      "link": "https://www.awwwards.com/be-a-juror/",
+      "deadline": "Jan 2026",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Web Design",
+      "type": "judging",
+      "description": "Judge web design excellence"
+    },
+    {
+      "id": 32,
+      "name": "The Webby Awards",
+      "link": "https://www.iadas.net/",
+      "deadline": "Rolling",
+      "difficulty": "Hard",
+      "status": "Not started",
+      "category": "Digital",
+      "type": "judging",
+      "description": "Internet's most prestigious award judging"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Design Awards Network",
+      "url": "https://designawards.network",
+      "lastScraped": null
+    },
+    {
+      "name": "Core77",
+      "url": "https://core77.com/competitions",
+      "lastScraped": null
+    },
+    {
+      "name": "AIGA Events",
+      "url": "https://www.aiga.org/events",
+      "lastScraped": null
+    }
+  ]
+}
